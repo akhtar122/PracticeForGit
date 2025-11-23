@@ -1,0 +1,44 @@
+﻿@model IEnumerable<PracticeForGit.Models.Employee>
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a class="btn btn-primary" asp-action="AddEmployee">Add Employee</a>
+</p>
+
+@if (Model == null || !Model.Any())
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th class="text-end">Salary</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                <td>@emp.Id</td>
+                <td>@emp.Name</td>
+                <td>@emp.Position</td>
+                <td class="text-end">@emp.Salary.ToString("C")</td>
+                <td>
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@emp.Id">Details</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

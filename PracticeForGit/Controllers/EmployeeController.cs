@@ -1,49 +1,120 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using PracticeForGit.Data;
 using PracticeForGit.Models;
-using System.Linq;
 
 namespace PracticeForGit.Controllers
 {
     public class EmployeeController : Controller
     {
-        // make the list static so added employees persist for the lifetime of the app process
-        private static List<Employee> employees = new List<Employee>
-        {
-            new Employee { Id = 1, Name = "Alice", Position = "Developer", Salary = 15200 },
-            new Employee { Id = 2, Name = "Bob", Position = "Designer" ,Salary = 15200},
-            new Employee { Id = 3, Name = "Charlie", Position = "Manager", Salary = 15200 }
-        };
+        private readonly ApplicationDbContext _db;
 
-        public IActionResult Index()
+        public EmployeeController(ApplicationDbContext db)
         {
-            var emplist = employees;
-            return View(emplist);
+            _db = db;
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Index()
         {
-            var emp = employees.FirstOrDefault(e => e.Id == id);
-            if (emp == null) return NotFound();
-            return View(emp);
+            var employees = await _db.Employees
+                .Include(e => e.Department)
+                .ToListAsync();
+            return View(employees);
+        }
+
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return BadRequest();
+
+            var employee = await _db.Employees
+                .Include(e => e.Department)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null) return NotFound();
+            return View(employee);
         }
 
         [HttpGet]
-        public IActionResult AddEmployee()
+        public async Task<IActionResult> Create()
         {
+            ViewBag.Departments = new SelectList(await _db.Departments.ToListAsync(), "Id", "DeprtName");
             return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Employee model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Departments = new SelectList(await _db.Departments.ToListAsync(), "Id", "DeprtName", model.DepartmentId);
+                return View(model);
+            }
+
+            _db.Employees.Add(model);
+            await _db.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return BadRequest();
+
+            var employee = await _db.Employees.FindAsync(id);
+            if (employee == null) return NotFound();
+
+            ViewBag.Departments = new SelectList(await _db.Departments.ToListAsync(), "Id", "DeprtName", employee.DepartmentId);
+            return View(employee);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddEmployee(Employee model)
+        public async Task<IActionResult> Edit(Employee model)
         {
             if (!ModelState.IsValid)
+            {
+                ViewBag.Departments = new SelectList(await _db.Departments.ToListAsync(), "Id", "DeprtName", model.DepartmentId);
                 return View(model);
+            }
 
-            var nextId = employees.Any() ? employees.Max(e => e.Id) + 1 : 1;
-            model.Id = nextId;
-            employees.Add(model);
+            var existing = await _db.Employees.FindAsync(model.Id);
+            if (existing == null) return NotFound();
 
+            existing.Name = model.Name;
+            existing.Position = model.Position;
+            existing.Salary = model.Salary;
+            existing.DepartmentId = model.DepartmentId;
+
+            await _db.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return BadRequest();
+
+            var employee = await _db.Employees
+                .Include(e => e.Department)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
+            if (employee == null) return NotFound();
+            return View(employee);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var employee = await _db.Employees.FindAsync(id);
+            if (employee != null)
+            {
+                _db.Employees.Remove(employee);
+                await _db.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
     }

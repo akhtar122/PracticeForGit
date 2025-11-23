@@ -1,9 +1,15 @@
-﻿namespace PracticeForGit.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace PracticeForGit.Models
 {
     public class Department
     {
-        public int Id { get; set; } = Guid.NewGuid().GetHashCode();
-        public string DeprtName { get; set; }
-        public string Description { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        public string DeprtName { get; set; } = null!;
+        public string Description { get; set; } = null!;
     }
 }

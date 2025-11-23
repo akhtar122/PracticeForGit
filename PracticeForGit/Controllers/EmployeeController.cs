@@ -117,5 +117,20 @@ namespace PracticeForGit.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        //[HttpGet]
+        //public async Task<IActionResult> AddEmployee()
+        //{
+        //    // forwards to Create() which prepares the Departments SelectList
+        //    return await Create();
+        //}
+
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> AddEmployee(Employee model)
+        //{
+        //    // forwards to the existing Create POST handler
+        //    return await Create(model);
+        //}
     }
 }

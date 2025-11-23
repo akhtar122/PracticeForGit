@@ -1,27 +1,30 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PracticeForGit.Data;
 using PracticeForGit.Models;
-using System.Linq;
 
 namespace PracticeForGit.Controllers
 {
     public class DepartmentController : Controller
     {
-        // static so changes persist while the app process runs
-        private static List<Department> departments = new List<Department>
-        {
-            new Department { Id = 1, DeprtName = "HR", Description = "Human Resources" },
-            new Department { Id = 2, DeprtName = "IT", Description = "Information Technology" },
-            new Department { Id = 3, DeprtName = "Finance", Description = "Finance and Accounting" }
-        };
+        private readonly ApplicationDbContext _db;
 
-        public IActionResult Index()
+        public DepartmentController(ApplicationDbContext db)
         {
+            _db = db;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var departments = await _db.Departments.ToListAsync();
             return View(departments);
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int? id)
         {
-            var dept = departments.FirstOrDefault(d => d.Id == id);
+            if (id == null) return BadRequest();
+
+            var dept = await _db.Departments.FindAsync(id);
             if (dept == null) return NotFound();
             return View(dept);
         }
@@ -34,55 +37,62 @@ namespace PracticeForGit.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Department model)
+        public async Task<IActionResult> Create(Department model)
         {
             if (!ModelState.IsValid) return View(model);
 
-            var nextId = departments.Any() ? departments.Max(d => d.Id) + 1 : 1;
-            model.Id = nextId;
-            departments.Add(model);
+            _db.Departments.Add(model);
+            await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            var dept = departments.FirstOrDefault(d => d.Id == id);
+            if (id == null) return BadRequest();
+
+            var dept = await _db.Departments.FindAsync(id);
             if (dept == null) return NotFound();
             return View(dept);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Department model)
+        public async Task<IActionResult> Edit(Department model)
         {
             if (!ModelState.IsValid) return View(model);
 
-            var existing = departments.FirstOrDefault(d => d.Id == model.Id);
+            var existing = await _db.Departments.FindAsync(model.Id);
             if (existing == null) return NotFound();
 
             existing.DeprtName = model.DeprtName;
             existing.Description = model.Description;
 
+            await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int? id)
         {
-            var dept = departments.FirstOrDefault(d => d.Id == id);
+            if (id == null) return BadRequest();
+
+            var dept = await _db.Departments.FindAsync(id);
             if (dept == null) return NotFound();
             return View(dept);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var dept = departments.FirstOrDefault(d => d.Id == id);
+            var dept = await _db.Departments.FindAsync(id);
             if (dept != null)
             {
-                departments.Remove(dept);
+                // If you want to prevent deleting departments with assigned employees,
+                // check for related employees here and handle accordingly.
+                _db.Departments.Remove(dept);
+                await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
         }

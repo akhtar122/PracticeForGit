@@ -24,7 +24,7 @@ namespace PracticeForGit.Controllers
         {
             if (id == null) return BadRequest();
 
-            var dept = await _db.Departments.FindAsync(id);
+            var dept = await _db.Departments.FindAsync(id.Value);
             if (dept == null) return NotFound();
             return View(dept);
         }
@@ -41,6 +41,9 @@ namespace PracticeForGit.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Ensure EF treats this as identity insert — clear any explicit Id value.
+            model.Id = 0;
+
             _db.Departments.Add(model);
             await _db.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
@@ -51,7 +54,7 @@ namespace PracticeForGit.Controllers
         {
             if (id == null) return BadRequest();
 
-            var dept = await _db.Departments.FindAsync(id);
+            var dept = await _db.Departments.FindAsync(id.Value);
             if (dept == null) return NotFound();
             return View(dept);
         }
@@ -89,8 +92,6 @@ namespace PracticeForGit.Controllers
             var dept = await _db.Departments.FindAsync(id);
             if (dept != null)
             {
-                // If you want to prevent deleting departments with assigned employees,
-                // check for related employees here and handle accordingly.
                 _db.Departments.Remove(dept);
                 await _db.SaveChangesAsync();
             }

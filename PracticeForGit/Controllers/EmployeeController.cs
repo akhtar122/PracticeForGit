@@ -42,6 +42,7 @@ namespace PracticeForGit.Controllers
             return View();
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Employee model)
